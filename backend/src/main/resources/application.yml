@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/infra}
+    username: ${DB_USER:infra_user}
+    password: ${DB_PASSWORD:change_me}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+integration:
+  vsphere:
+    host: ${VSPHERE_HOST:vsphere.local}
+    username: ${VSPHERE_USERNAME:readonly@vsphere.local}
+    password: ${VSPHERE_PASSWORD:}
+  ansible:
+    facts-path: ${ANSIBLE_FACTS_PATH:/opt/ansible/facts/latest.json}
