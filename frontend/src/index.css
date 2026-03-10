@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+body { @apply bg-slate-950 text-slate-100 transition-colors duration-500; }
+.light body { @apply bg-slate-100 text-slate-900; }
+.card { @apply rounded-2xl border border-slate-700/30 bg-slate-900/70 shadow-lg; }
+.light .card { @apply bg-white border-slate-200; }
