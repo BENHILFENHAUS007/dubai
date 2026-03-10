@@ -1,0 +1,39 @@
+---
+- name: Collect Linux facts and push to CBD SERVER INVENTORY API
+  hosts: linux_servers
+  gather_facts: true
+  vars:
+    cbd_api_url: "http://inventory.internal:8000/api/server-update"
+    cbd_api_token: "operator"
+  tasks:
+    - name: Build server payload
+      set_fact:
+        server_payload:
+          hostname: "{{ ansible_hostname }}"
+          ip_address: "{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) }}"
+          os_name: "{{ ansible_distribution }}"
+          os_version: "{{ ansible_distribution_version }}"
+          kernel: "{{ ansible_kernel }}"
+          cpu_count: "{{ ansible_processor_vcpus | int }}"
+          memory_gb: "{{ (ansible_memtotal_mb / 1024) | round(0, 'common') | int }}"
+          cluster: "{{ hostvars[inventory_hostname].cluster | default('UNKNOWN') }}"
+          power_state: "poweredOn"
+          patch_status: "pending"
+          enabled_flag: true
+          last_reboot_time: "{{ ansible_date_time.iso8601 }}"
+
+    - name: Push payload to FastAPI backend
+      uri:
+        url: "{{ cbd_api_url }}"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ cbd_api_token }}"
+          Content-Type: "application/json"
+        body_format: json
+        body: "{{ server_payload }}"
+        status_code: [200, 201]
+      register: cbd_push_result
+
+    - name: Print API response
+      debug:
+        var: cbd_push_result.json

@@ -41,6 +41,29 @@ Core tables provided in `docs/schema.sql`:
 - `clusters`
 - `snapshots`
 
+## Ansible integration
+Use `ansible/server_fact_push.yml` to collect:
+- hostname, IP, OS, kernel, CPU, memory, uptime context
+Then push JSON to `POST /api/server-update`.
+
+## Run backend (internal network)
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+Environment variables (never commit secrets):
+- `DB_URL`
+- `JWT_SECRET`
+- `VSPHERE_HOST`
+- `VSPHERE_USERNAME`
+- `VSPHERE_PASSWORD`
+- `ANSIBLE_FACTS_PATH`
+
+## Build frontend
 ## 5) Example Integrations
 
 - VMware: `scripts/vsphere_sync.py` using `pyVmomi`.
