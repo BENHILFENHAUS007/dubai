@@ -1,63 +1,40 @@
-# CBD SERVER INVENTORY
+# Infra Control Center (Open-Source Internal DevOps Dashboard)
 
-Production-ready internal infrastructure dashboard platform for enterprise networks.
+Production-oriented blueprint and starter implementation for an **air-gapped internal infrastructure control center** integrating VMware vSphere and Ansible automation.
 
-## Open-source stack (commercial safe)
-- Backend API: **FastAPI** (MIT)
-- Frontend: **React + Tailwind + Framer Motion + Recharts** (MIT)
-- Database: **PostgreSQL** (PostgreSQL License)
-- Automation: **Ansible** (GPLv3)
-- App server: **Apache Tomcat** (Apache-2.0)
+## 1) System Architecture Diagram
 
-## System architecture
 ```mermaid
-flowchart TD
-  A[Linux Servers on RHEL estates] -->|SSH + facts| B[Ansible Automation Server]
-  B -->|POST JSON /api/server-update| C[FastAPI Backend]
-  V[vSphere API Read-only account] --> C
-  C --> D[(PostgreSQL)]
-  D --> C
-  C --> E[React Azure-style Dashboard]
-  E --> F[Apache Tomcat serves frontend artifact]
+flowchart LR
+  U[Admin / Operator / Viewer] --> PWA[React PWA UI]
+  PWA --> API[Spring Boot API on Tomcat]
+  API --> PG[(PostgreSQL)]
+  API --> SCHED[Inventory Sync Service]
+  SCHED --> VS[vSphere API (read-only service account)]
+  SCHED --> AF[Ansible Facts JSON / Callback]
+  AF --> PLAY[Ansible Patch Playbooks]
+  API --> RBAC[Role-based Access Control]
 ```
 
-## Project structure
-```text
-backend/
-  app/
-    api/routes.py
-    core/{config.py,security.py}
-    db/database.py
-    models/{entities.py,schemas.py}
-    services/inventory_sync.py
-    main.py
-  requirements.txt
-ansible/
-  server_fact_push.yml
-frontend/
-  public/{manifest.webmanifest,sw.js,offline.html,assets/logo/cbd-logo.svg}
-  src/{layout,pages,components,context,data,utils}
-docs/schema.sql
-scripts/{vsphere_sync.py,ansible_post_patch_sync.sh}
-```
+## 2) Backend API Structure
 
-## FastAPI endpoints
-- `POST /api/server-update`
-- `GET /api/servers`
-- `GET /api/vm-inventory`
-- `GET /api/patch-status`
-- `POST /api/sync-inventory`
-- `PUT /api/admin/update-server/{server_id}`
-- `DELETE /api/admin/server/{server_id}`
+- `GET /api/servers` — searchable server inventory with pagination.
+- `GET /api/vm-inventory` — VM sync status/result summary.
+- `GET /api/patch-status` — compliance counters.
+- `POST /api/sync-inventory` — trigger sync job from vSphere + Ansible facts.
+- `POST /api/admin/update-server/{id}` — admin/operator metadata update.
 
-## RBAC (IAM-style)
-Authorization header uses token role for demo:
-- `Bearer admin` -> Admin: read/write/sync/user-management
-- `Bearer operator` -> Operator: read/sync
-- `Bearer viewer` -> Viewer: read-only
+## 3) Frontend Component Structure
 
-## PostgreSQL schema
-See `docs/schema.sql` for tables:
+- `NavBar` with top links + macOS-style dock hover animation.
+- `DashboardPage` hero + animated metric cards + charts.
+- `InventoryPage` filter/search/export table layout.
+- `AdminPage` toggle controls and manual update UX.
+- `ThemeContext` dark/light theme switching with animated transitions.
+
+## 4) Database Schema
+
+Core tables provided in `docs/schema.sql`:
 - `servers`
 - `patch_history`
 - `vm_inventory`
@@ -87,26 +64,55 @@ Environment variables (never commit secrets):
 - `ANSIBLE_FACTS_PATH`
 
 ## Build frontend
+## 5) Example Integrations
+
+- VMware: `scripts/vsphere_sync.py` using `pyVmomi`.
+- Ansible post-patch callback: `scripts/ansible_post_patch_sync.sh`.
+- Sync endpoint in backend: `POST /api/sync-inventory`.
+
+## 6) Security Notes
+
+- Use read-only vSphere service account.
+- Credentials pulled from environment variables (`VSPHERE_*`, `DB_*`).
+- No credentials hardcoded in application sources.
+
+## 7) Apache Tomcat Deployment
+
+1. Build WAR:
+   ```bash
+   cd backend
+   mvn clean package
+   ```
+2. Copy `target/infra-control-center-1.0.0.war` to `$CATALINA_BASE/webapps/`.
+3. Set environment vars in `setenv.sh` or systemd unit:
+   - `DB_URL`, `DB_USER`, `DB_PASSWORD`
+   - `VSPHERE_HOST`, `VSPHERE_USERNAME`, `VSPHERE_PASSWORD`
+   - `ANSIBLE_FACTS_PATH`
+4. Restart Tomcat and verify `/actuator/health`.
+
+## 8) PWA Setup
+
+Already included in `frontend`:
+- `manifest.webmanifest`
+- `sw.js` service worker cache + offline fallback
+- `offline.html`
+- Responsive Tailwind layout
+
+Build:
 ```bash
 cd frontend
 npm install
 npm run build
 ```
 
-## Apache Tomcat deployment (no Nginx)
-1. Build frontend static assets (`frontend/dist`).
-2. Package `dist` as `ROOT.war` (or `cbd-inventory.war`) and deploy to Tomcat `webapps/`.
-3. Run FastAPI as systemd service on internal host (`localhost:8000`).
-4. In Tomcat, configure reverse proxy servlet/filter or corporate HTTPD->Tomcat connector to route `/api/*` to FastAPI.
-5. Keep all traffic internal-only and TLS-terminated per enterprise policy.
+## 9) Scale and Performance
 
-## PWA capabilities
-- Manifest: installable on mobile/desktop
-- Service worker: offline fallback
-- Offline page for disconnected usage
+Recommendations for 1000+ server scale:
+- Add DB indexes on `hostname`, `ip_address`, `cluster_name`, `patch_status`.
+- Cache dashboard aggregates (Redis optional for larger scale).
+- Use async sync workers and batch upserts.
+- Enable pagination for all table endpoints.
 
-## Performance notes
-- Indexed server table fields for hostname/IP/cluster/patch status
-- Paginated inventory endpoint
-- Keep sync jobs asynchronous
-- Target: 1000+ servers and 100+ VMs with <3s dashboard load using cached aggregates
+## 10) License
+
+Use Apache-2.0 or MIT for free commercial use.

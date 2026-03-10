@@ -1,4 +1,4 @@
-const CACHE = 'cbd-server-inventory-v1';
+const CACHE = 'infra-cc-v1';
 const OFFLINE = '/offline.html';
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(['/', OFFLINE])));

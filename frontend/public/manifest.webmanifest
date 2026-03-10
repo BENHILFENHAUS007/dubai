@@ -1,15 +1,9 @@
 {
-  "name": "CBD SERVER INVENTORY",
-  "short_name": "CBD Inventory",
+  "name": "Infra Control Center",
+  "short_name": "InfraCC",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#020617",
+  "background_color": "#0f172a",
   "theme_color": "#0f172a",
-  "icons": [
-    {
-      "src": "/assets/logo/cbd-logo.svg",
-      "sizes": "64x64",
-      "type": "image/svg+xml"
-    }
-  ]
+  "icons": []
 }

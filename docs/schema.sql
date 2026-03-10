@@ -1,45 +1,43 @@
 CREATE TABLE clusters (
   id BIGSERIAL PRIMARY KEY,
-  name VARCHAR(120) UNIQUE NOT NULL,
-  location VARCHAR(120),
+  name VARCHAR(100) UNIQUE NOT NULL,
+  location VARCHAR(100),
   total_cpu INTEGER,
-  total_memory_gb INTEGER,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  total_memory_gb INTEGER
 );
 
 CREATE TABLE servers (
   id BIGSERIAL PRIMARY KEY,
-  hostname VARCHAR(120) UNIQUE NOT NULL,
+  hostname VARCHAR(100) UNIQUE NOT NULL,
   ip_address INET UNIQUE NOT NULL,
   os_name VARCHAR(80) NOT NULL,
   os_version VARCHAR(80),
-  kernel VARCHAR(80),
   cpu_count INTEGER,
   memory_gb INTEGER,
-  cluster VARCHAR(120),
-  power_state VARCHAR(20),
+  cluster_name VARCHAR(100),
+  vm_power_state VARCHAR(20),
   patch_status VARCHAR(20),
   enabled_flag BOOLEAN NOT NULL DEFAULT TRUE,
+  patch_automation_enabled BOOLEAN NOT NULL DEFAULT TRUE,
   last_patch_date DATE,
-  last_reboot_time TIMESTAMPTZ,
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  last_reboot_time TIMESTAMPTZ
 );
 
 CREATE TABLE vm_inventory (
   id BIGSERIAL PRIMARY KEY,
-  vm_uuid VARCHAR(120) UNIQUE NOT NULL,
-  vm_name VARCHAR(120),
+  vm_uuid VARCHAR(100) UNIQUE NOT NULL,
   server_id BIGINT REFERENCES servers(id),
-  cluster VARCHAR(120),
-  power_state VARCHAR(20),
-  guest_os VARCHAR(120),
-  discovered_at TIMESTAMPTZ DEFAULT NOW()
+  vcenter_name VARCHAR(120),
+  datacenter VARCHAR(120),
+  cluster_name VARCHAR(120),
+  tools_status VARCHAR(40),
+  discovered_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE patch_history (
   id BIGSERIAL PRIMARY KEY,
   server_id BIGINT NOT NULL REFERENCES servers(id),
-  patch_job_id VARCHAR(120) NOT NULL,
+  job_id VARCHAR(80) NOT NULL,
   status VARCHAR(20) NOT NULL,
   started_at TIMESTAMPTZ NOT NULL,
   ended_at TIMESTAMPTZ,
@@ -54,8 +52,3 @@ CREATE TABLE snapshots (
   size_gb NUMERIC(10,2),
   expires_at TIMESTAMPTZ
 );
-
-CREATE INDEX idx_servers_hostname ON servers(hostname);
-CREATE INDEX idx_servers_ip ON servers(ip_address);
-CREATE INDEX idx_servers_cluster ON servers(cluster);
-CREATE INDEX idx_servers_patch_status ON servers(patch_status);

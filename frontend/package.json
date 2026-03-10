@@ -1,6 +1,6 @@
 {
-  "name": "cbd-server-inventory-ui",
-  "version": "2.0.0",
+  "name": "infra-control-center-ui",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "framer-motion": "^11.3.19",
+    "lucide-react": "^0.462.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
